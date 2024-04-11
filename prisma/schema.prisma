@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      // 'USER', 'TECHNICIAN', ou 'MANAGER'
+  calls     Call[]    @relation("UserCalls")
+  technicianCalls Call[] @relation("TechnicianCalls")
+  userHistory Historic[] @relation("UserHistory")
+}
+
+model Call {
+  id           String    @id @default(uuid())
+  description  String
+  status       Status    // 'OPEN', 'IN_PROGRESS', 'CLOSED'
+  priority     Priority  // 'URGENT', 'HIGH', 'MEDIUM', 'LOW'
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userId       String
+  user         User      @relation("UserCalls", fields: [userId], references: [id])
+  technicianId String?
+  technician   User?     @relation("TechnicianCalls", fields: [technicianId], references: [id])
+  history      Historic[] @relation("CallHistory")
+}
+
+model Historic {
+  id       String    @id @default(uuid())
+  callId   String
+  call     Call      @relation("CallHistory", fields: [callId], references: [id])
+  userId   String
+  user     User      @relation("UserHistory", fields: [userId], references: [id])     
+  action   String
+  createdAt DateTime @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+enum Role {
+  USER
+  TECHNICIAN
+  MANAGER
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
